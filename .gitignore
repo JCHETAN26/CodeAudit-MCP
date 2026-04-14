@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.npm
+
+# Environment variables (NEVER commit API keys)
+.env
+.env.local
+.env.*.local
+
+# Build output
+build/
+dist/
+*.js.map
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+.tmp/
+tmp/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Model artifacts (large files)
+codesentinel_artifacts/
+*.bin
+*.safetensors
+*.ckpt
+
+# Vulnerable app (demo only)
+vulnerable-app/
+
+# Cache
+.cache/
+*.cache

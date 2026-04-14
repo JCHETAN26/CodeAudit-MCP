@@ -1,0 +1,8 @@
+unsloth[cu124-torch250]
+xformers
+trl
+peft
+accelerate
+bitsandbytes
+datasets
+transformers

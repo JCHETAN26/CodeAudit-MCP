@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "codeaudit-mcp": {
+      "command": "node",
+      "args": [
+        "/Users/chetan/Code-Review-Agent-MCP/build/index.js"
+      ]
+    }
+  }
+}

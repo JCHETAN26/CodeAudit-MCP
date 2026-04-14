@@ -1,0 +1,43 @@
+Task: Build "CodeSentinel MCP," a production-grade AI Code Reviewer that functions as a Model Context Protocol (MCP) server.
+
+Project Core Requirements:
+
+Model & Fine-Tuning: - Orchestrate a fine-tuning pipeline for a Llama-3.1-8B-Instruct or Qwen2.5-Coder-7B model.
+
+The training data must be a "High-Signal Mix": SecureCode-v2 (OWASP security), OSS Human Reviews (Senior Engineer tone), and Synthetic Negative/Positive pairs (logic edge cases).
+
+Generate the Python fine-tuning script optimized for an NVIDIA A100 (80GB) using the Unsloth library and LoRA (Rank 64, Alpha 128).
+
+MCP Server Architecture:
+
+Create a TypeScript-based MCP Server using the official SDK.
+
+Expose the following Tools to the AI:
+
+get_git_diff: Extracts branch/commit changes.
+
+analyze_code_complexity: Uses local static analysis to flag "spaghetti" logic.
+
+security_scan: Integrates with a local scanner (Semgrep) for hard-coded secrets and SQLi.
+
+Implement Context Injection: The server must automatically retrieve the README.md and CONTRIBUTING.md to enforce project-specific style guides.
+
+Robustness & Product Logic:
+
+The AI's review personality must be "Principal Engineer": concise, logic-first, no fluff.
+
+Every review comment must follow a strict schema: [Issue] -> [Impact] -> [Fix (Code Diff)].
+
+Implement a Validation Loop: Use Antigravity's "Rule" system to ensure the AI never suggests a fix that introduces a syntax error.
+
+Deliverable Structure:
+
+Create an implementation plan first.
+
+Generate the dataset_prep.py script.
+
+Generate the train.py (A100 optimized).
+
+Generate the full MCP server codebase (index.ts, package.json).
+
+Provide instructions for deployment to Claude Desktop and Cursor.
