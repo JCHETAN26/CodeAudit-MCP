@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * QuickTest: Test CodeSentinel with Together.AI
+ * QuickTest: Test CodeAudit with Together.AI
  * 
  * Usage: node scripts/test-together.js
  */
@@ -32,7 +32,7 @@ if (!apiKey) {
   process.exit(1);
 }
 
-console.log('🧪 CodeSentinel Together.AI Quick Test\n');
+console.log('🧪 CodeAudit Together.AI Quick Test\n');
 
 // Test 1: Check API connectivity
 console.log('📡 Test 1: Checking Together.AI API connectivity...');
@@ -143,7 +143,7 @@ try {
   console.log('\n✅ Together.AI integration is working!');
   console.log('\n📌 Next steps:');
   console.log('   1. Restart Claude Desktop');
-  console.log('   2. Share CodeSentinel config with friends');
+  console.log('   2. Share CodeAudit config with friends');
   console.log('   3. They can now test review_code tool\n');
 } catch (error) {
   console.error(`\n❌ Request failed: ${error.message}`);

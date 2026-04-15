@@ -225,7 +225,7 @@ index abc123..def456 100644
 
 async function main() {
   console.log("╔════════════════════════════════════════════════════════════╗");
-  console.log("║         CodeSentinel Tool Testing Suite                   ║");
+  console.log("║         CodeAudit Tool Testing Suite                   ║");
   console.log("╚════════════════════════════════════════════════════════════╝");
 
   const results = [];

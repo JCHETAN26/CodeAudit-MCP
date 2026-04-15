@@ -16,22 +16,7 @@ const execFileAsync = promisify(execFile);
 const SERVER_NAME = "CodeAudit-MCP";
 const SERVER_VERSION = "2.0.0";
 const SYSTEM_INSTRUCTION =
-  "You are a Principal Engineer. You ignore syntax fluff and variable naming unless it affects readability. You focus on: Distributed system failures, Race conditions, Resource leaks, and Scalability. Structure every review as: [Issue] -> [Impact] -> [Fix (Code Diff)].";
-
-// VPS Configuration (Self-hosted model server)
-const VPS_API_URL = process.env.VPS_API_URL;
-const USE_VPS = VPS_API_URL !== undefined && VPS_API_URL.length > 0;
-
-// Together.AI Configuration (for easy friends & family testing)
-const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
-const TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions";
-const TOGETHER_MODEL = "meta-llama/Llama-3.1-8B-Instruct";  // Available on Together.AI
-
-// Fallback to HF Spaces if no Together.AI key
-const HF_SPACES_API_URL =
-  process.env.CODESENTINEL_API_URL ||
-  "https://chetanshivnani-codesentinel.hf.space/review";
-const USE_LOCAL_MODEL = process.env.USE_LOCAL_MODEL === "true";
+  "You are a Principal Engineer. You ignore syntax fluff and variable naming unless it affects readability. You focus on: Distributed system failures, Race conditions, Resource leaks, and Scalability. Structure every review as: [Issue] -> [Impact] -> [Fix (Code Diff)]."
 
 const SEMGREP_TIMEOUT_MS = 120_000;
 const EXEC_MAX_BUFFER = 10 * 1024 * 1024;
@@ -97,10 +82,10 @@ server.registerPrompt(
   "principal_engineer_review",
   {
     title: "Principal Engineer Review Persona",
-    description: "Returns the hardcoded review instructions used by CodeSentinel.",
+    description: "Returns the hardcoded review instructions used by CodeAudit-MCP.",
   },
   async () => ({
-    description: "Primary review instructions for the CodeSentinel reviewer.",
+    description: "Principal engineer-level code review instructions for in-depth analysis.",
     messages: [
       {
         role: "assistant",
@@ -116,9 +101,9 @@ server.registerPrompt(
 server.registerTool(
   "review_code",
   {
-    title: "Review Code with CodeSentinel Model",
+    title: "Review Code with CodeAudit Local Model",
     description:
-      "Generate an AI-powered code review using the trained CodeSentinel LoRA model. Analyzes code for security issues, race conditions, and scalability problems.",
+      "Generate an AI-powered code review using Llama 3.1 8B with LoRA adapter. Runs locally on your machine. Analyzes code for security issues, race conditions, and scalability problems.",
     inputSchema: {
       file: z.string().describe("Name of the file being reviewed"),
       language: z.string().describe("Programming language (python, go, typescript, etc.)"),
@@ -1082,254 +1067,21 @@ interface CodeReviewResult {
 }
 
 async function generateCodeReview(request: CodeReviewRequest): Promise<CodeReviewResult> {
-  // Priority: VPS > Together.AI > Local > HF Spaces
-  if (USE_VPS) {
-    return generateCodeReviewVPS(request);
-  }
-
-  if (TOGETHER_API_KEY) {
-    return generateCodeReviewTogether(request);
-  }
-
-  if (USE_LOCAL_MODEL) {
-    return generateCodeReviewLocal(request);
-  }
-
-  return generateCodeReviewHFSpaces(request);
+  // Use local Llama 3.1 8B model with LoRA adapter
+  return generateCodeReviewLocal(request);
 }
 
 /**
- * VPS integration (self-hosted model server)
- * Expects a Flask/FastAPI server at VPS_API_URL with /review endpoint
- */
-async function generateCodeReviewVPS(request: CodeReviewRequest): Promise<CodeReviewResult> {
-  if (!VPS_API_URL) {
-    return {
-      error: "VPS_API_URL not configured",
-      issues: [],
-      summary: "",
-      suggestions: [],
-      security_concerns: [],
-    };
-  }
-
-  try {
-    const response = await fetch(VPS_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return {
-        error: `VPS API error (${response.status}): ${errorText}`,
-        issues: [],
-        summary: "",
-        suggestions: [],
-        security_concerns: [],
-      };
-    }
-
-    const result = (await response.json()) as CodeReviewResult;
-    return result;
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    return {
-      error: `Failed to reach VPS at ${VPS_API_URL}. Make sure the server is running and firewall allows port 5000. Error: ${errorMsg}`,
-      issues: [],
-      summary: "",
-      suggestions: [],
-      security_concerns: [],
-    };
-  }
-}
-
-/**
- * Together.AI integration (free tier, supports LoRA, easy sharing)
- */
-async function generateCodeReviewTogether(request: CodeReviewRequest): Promise<CodeReviewResult> {
-  try {
-    const prompt = buildCodeReviewPrompt(request);
-
-    const response = await fetch(TOGETHER_API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${TOGETHER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: TOGETHER_MODEL,
-        messages: [
-          {
-            role: "system",
-            content: SYSTEM_INSTRUCTION,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        top_p: 0.9,
-        top_k: 50,
-        max_tokens: 2048,
-        repetition_penalty: 1.0,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMsg =
-        (errorData as any).error?.message || `HTTP ${response.status}`;
-      return {
-        error: `Together.AI API error: ${errorMsg}`,
-        issues: [],
-        summary: "",
-        suggestions: [],
-        security_concerns: [],
-      };
-    }
-
-    const data = (await response.json()) as {
-      choices: Array<{ message: { content: string } }>;
-    };
-    const content = data.choices?.[0]?.message?.content || "";
-
-    // Parse the model response
-    return parseCodeReviewResponse(content);
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    return {
-      error: `Together.AI call failed: ${errorMsg}. Check your TOGETHER_API_KEY in .env`,
-      issues: [],
-      summary: "",
-      suggestions: [],
-      security_concerns: [],
-    };
-  }
-}
-
-/**
- * Build a structured prompt for code review
- */
-function buildCodeReviewPrompt(request: CodeReviewRequest): string {
-  return `Review this ${request.language} code for security, performance, and scalability issues.
-Return a JSON object with this structure:
-{
-  "issues": [{"severity": "CRITICAL|HIGH|MEDIUM|LOW", "type": "string", "message": "string", "line": number}],
-  "summary": "string",
-  "suggestions": ["string"],
-  "security_concerns": ["string"]
-}
-
-File: ${request.file}
-Language: ${request.language}
-${request.context ? `Context: ${request.context}` : ""}
-
-Code:
-\`\`\`${request.language}
-${request.code}
-\`\`\`
-
-Analyze for:
-1. Security vulnerabilities (SQL injection, XSS, auth flaws)
-2. Race conditions and deadlocks
-3. Resource leaks (memory, goroutines, connections)
-4. Scalability issues
-5. Performance bottlenecks
-
-Return ONLY valid JSON, no markdown.`;
-}
-
-/**
- * Parse the model's JSON response
- */
-function parseCodeReviewResponse(content: string): CodeReviewResult {
-  try {
-    // Try to extract JSON from the response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return {
-        error: "Model returned non-JSON response",
-        issues: [],
-        summary: content.substring(0, 200),
-        suggestions: [],
-        security_concerns: [],
-      };
-    }
-
-    const result = JSON.parse(jsonMatch[0]) as CodeReviewResult;
-    return {
-      issues: result.issues || [],
-      summary: result.summary || "",
-      suggestions: result.suggestions || [],
-      security_concerns: result.security_concerns || [],
-    };
-  } catch (parseError) {
-    return {
-      error: "Failed to parse model response as JSON",
-      issues: [],
-      summary: content.substring(0, 200),
-      suggestions: [],
-      security_concerns: [],
-    };
-  }
-}
-
-/**
- * HF Spaces API integration (fallback)
- */
-async function generateCodeReviewHFSpaces(request: CodeReviewRequest): Promise<CodeReviewResult> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 300_000); // 5 minute timeout
-
-    const response = await fetch(HF_SPACES_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return {
-        error: `API error (${response.status}): ${errorText}`,
-        issues: [],
-        summary: "",
-        suggestions: [],
-        security_concerns: [],
-      };
-    }
-
-    const result = (await response.json()) as CodeReviewResult;
-    return result;
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    return {
-      error: `Failed to call CodeSentinel API: ${errorMsg}. Make sure the HF Spaces endpoint is deployed at: ${HF_SPACES_API_URL}`,
-      issues: [],
-      summary: "",
-      suggestions: [],
-      security_concerns: [],
-    };
-  }
-}
-
-/**
- * Local model execution (fallback, requires GPU/sufficient memory)
- * Only used if USE_LOCAL_MODEL=true environment variable is set
+ * Local model execution using Llama 3.1 8B with LoRA adapter
+ * Requires Python 3.10+ with PyTorch and transformers installed
  */
 async function generateCodeReviewLocal(request: CodeReviewRequest): Promise<CodeReviewResult> {
   // Use absolute path - __dirname is the build directory, go up one level to project root
   const projectRoot = path.dirname(__dirname);
-  const pythonScript = path.join(projectRoot, "codesentinel_review.py");
+  const pythonScript = path.join(projectRoot, "codeaudit_review.py");
   
   return new Promise((resolve) => {
-    const child = spawn("/opt/homebrew/bin/python3", [pythonScript], {
+    const child = spawn("python3", [pythonScript], {
       cwd: projectRoot,
       env: { ...process.env, PYTHONPATH: projectRoot },
     });
@@ -1454,7 +1206,7 @@ async function main(): Promise<void> {
 
 main().catch(async (error) => {
   const message = error instanceof Error ? error.stack || error.message : String(error);
-  await fs.writeFile(path.join(os.tmpdir(), "codesentinel-error.log"), `${message}\n`, "utf8").catch(() => {});
+  await fs.writeFile(path.join(os.tmpdir(), "codeaudit-error.log"), `${message}\n`, "utf8").catch(() => {});
   process.stderr.write(`Fatal ${SERVER_NAME} startup error:\n${message}\n`);
   process.exit(1);
 });

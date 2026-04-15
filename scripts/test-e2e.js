@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * End-to-end demo test for CodeSentinel MCP Server
+ * End-to-end demo test for CodeAudit MCP Server
  * This is a practical integration test, not a strict protocol test.
  * Run: npm run test:e2e
  */
@@ -16,7 +16,7 @@ const serverPath = path.join(__dirname, "../build/index.js");
 
 async function runTests() {
   console.log("╔════════════════════════════════════════════════════════════╗");
-  console.log("║     CodeSentinel E2E (End-to-End) Demo Test                ║");
+  console.log("║     CodeAudit E2E (End-to-End) Demo Test                ║");
   console.log("╚════════════════════════════════════════════════════════════╝\n");
 
   let server = null;
@@ -153,7 +153,7 @@ async function runTests() {
     if (passed < total) {
       console.log("⚠️  Some tests failed. Check the output above for details.\n");
     } else {
-      console.log("✅ All E2E tests passed! CodeSentinel is ready to use.\n");
+      console.log("✅ All E2E tests passed! CodeAudit is ready to use.\n");
     }
 
     process.exit(passed === total ? 0 : 1);

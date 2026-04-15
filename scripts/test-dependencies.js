@@ -11,7 +11,7 @@ import path from "path";
 
 const checks = [];
 
-console.log("🔍 CodeSentinel Dependency Validation\n");
+console.log("🔍 CodeAudit Dependency Validation\n");
 
 // Check Node.js version
 const nodeVersion = process.version;

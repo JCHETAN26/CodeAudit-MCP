@@ -9,14 +9,12 @@
   },
   "files": [
     "build",
-    "src",
     "bin",
-    "scripts",
-    "claude_desktop_config.json",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsc --project tsconfig.json",
     "start": "node build/index.js",
     "dev": "npm run build && node build/index.js",
@@ -25,8 +23,7 @@
     "test:tools": "node scripts/test-tools.js",
     "test:e2e": "npm run build && node scripts/test-e2e.js",
     "test": "npm run test:validate && npm run test:tools && npm run test:e2e",
-    "demo": "npm run build && node scripts/demo.js",
-    "postinstall": "node bin/setup.js"
+    "demo": "npm run build && node scripts/demo.js"
   },
   "keywords": [
     "mcp",
@@ -38,11 +35,11 @@
     "semgrep",
     "typescript"
   ],
-  "author": "Chetan Shivnani",
+  "author": "Chetan Jitendra",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chetanshivnani/CodeSentinel-MCP"
+    "url": "https://github.com/JCHETAN26/CodeAudit-MCP"
   },
   "engines": {
     "node": ">=20.0.0"

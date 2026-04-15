@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Diagnostic script to check CodeSentinel MCP setup
+ * Diagnostic script to check CodeAudit MCP setup
  */
 
 import fs from "fs";
@@ -48,12 +48,12 @@ console.log(
 if (configExists) {
   try {
     const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-    if (config.mcpServers && config.mcpServers.codesentinel) {
-      console.log("✅ CodeSentinel registered in Claude config");
-      console.log(`   Command: ${config.mcpServers.codesentinel.command}`);
-      console.log(`   Args: ${config.mcpServers.codesentinel.args.join(" ")}`);
+    if (config.mcpServers && config.mcpServers.codeaudit) {
+      console.log("✅ CodeAudit registered in Claude config");
+      console.log(`   Command: ${config.mcpServers.codeaudit.command}`);
+      console.log(`   Args: ${config.mcpServers.codeaudit.args.join(" ")}`);
     } else {
-      console.log("❌ CodeSentinel not found in mcpServers");
+      console.log("❌ CodeAudit not found in mcpServers");
     }
   } catch (e) {
     console.log("❌ Error parsing config:", e.message);
@@ -72,7 +72,7 @@ console.log("🛠️  Troubleshooting Steps");
 console.log("1. Verify Claude Desktop is completely closed (⌘Q or killall Claude)");
 console.log("2. Reopen Claude Desktop from Applications");
 console.log(
-  '3. Look for "CodeSentinel" in the Tool Browser (Claude\'s left sidebar)'
+  '3. Look for "CodeAudit" in the Tool Browser (Claude\'s left sidebar)'
 );
 console.log(
   "4. If still not working, check ~/Library/Logs/Claude/mcp.log or similar"

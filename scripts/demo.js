@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Demo script: Test CodeSentinel against vulnerable-app
+ * Demo script: Test CodeAudit against vulnerable-app
  * This demonstrates the complete review flow with the demo repository
  * Run: npm run demo
  */
@@ -18,7 +18,7 @@ const cwd = path.dirname(__dirname); // Project root
 
 async function runDemo() {
   console.log("╔════════════════════════════════════════════════════════════╗");
-  console.log("║         CodeSentinel Demo: Vulnerable App Review          ║");
+  console.log("║         CodeAudit Demo: Vulnerable App Review          ║");
   console.log("╚════════════════════════════════════════════════════════════╝\n");
 
   const vulnerableAppPath = path.join(cwd, "vulnerable-app");

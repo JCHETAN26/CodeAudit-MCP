@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Test script for CodeSentinel model integration
+ * Test script for CodeAudit model integration
  * Tests the review_code tool with vulnerable-app samples
  */
 
@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = process.cwd();
 
 async function testModelIntegration() {
-  console.log("🚀 CodeSentinel Model Integration Test\n");
+  console.log("🚀 CodeAudit Model Integration Test\n");
 
   // Test 1: Load and test Python model loader
   console.log("📋 Test 1: Python Model Loader");
@@ -37,7 +37,7 @@ async function testModelIntegration() {
   console.log("📋 Test 2: LoRA Model Artifacts");
   console.log("─".repeat(50));
 
-  const adapterPath = path.join(projectRoot, "codesentinel_artifacts/codesentinel_lora_model");
+  const adapterPath = path.join(projectRoot, "codeaudit_artifacts/codeaudit_lora_model");
   const requiredFiles = ["adapter_model.safetensors", "adapter_config.json", "tokenizer.json"];
 
   let allFilesExist = true;
@@ -85,12 +85,12 @@ async function testModelIntegration() {
   console.log("📋 Test 4: Python CLI Wrapper");
   console.log("─".repeat(50));
 
-  const cliPath = path.join(projectRoot, "codesentinel_review.py");
+  const cliPath = path.join(projectRoot, "codeaudit_review.py");
   if (!fs.existsSync(cliPath)) {
-    console.error("❌ codesentinel_review.py not found");
+    console.error("❌ codeaudit_review.py not found");
     process.exit(1);
   }
-  console.log("✅ codesentinel_review.py exists\n");
+  console.log("✅ codeaudit_review.py exists\n");
 
   // Test 5: Check MCP server build
   console.log("📋 Test 5: MCP Server Build");
@@ -141,7 +141,7 @@ async function testModelIntegration() {
   console.log("✅ All pre-integration checks passed!\n");
   console.log("📖 What's Next:");
   console.log("1. Run the model on vulnerable-app:");
-  console.log("   python3 codesentinel_review.py < vulnerable-app/app.py");
+  console.log("   python3 codeaudit_review.py < vulnerable-app/app.py");
   console.log("");
   console.log("2. Test the MCP server:");
   console.log("   npm test");
