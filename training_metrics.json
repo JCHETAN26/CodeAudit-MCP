@@ -1,0 +1,16 @@
+{
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct + LoRA",
+  "training_steps": 500,
+  "training_epochs": 31.253968253968253,
+  "loss_metrics": {
+    "initial_loss": 2.3933610916137695,
+    "final_loss": 2.3966352462768556,
+    "average_loss": 2.391764785766602,
+    "min_loss": 2.3626934051513673,
+    "max_loss": 2.4304134368896486
+  },
+  "derived_metrics": {
+    "perplexity": 10.986148436764495,
+    "loss_improvement_percent": -0.13680153298048536
+  }
+}

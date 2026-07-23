@@ -38,9 +38,9 @@ switch (command) {
   case '-h':
   case '--help':
     console.log(`
-CodeSentinel MCP Server
+CodeAudit-MCP — Principal Engineer-grade code review
 
-Usage: codesentinel-mcp [command]
+Usage: codeaudit-mcp [command]
 
 Commands:
   start          Start the MCP server (default)
@@ -48,9 +48,9 @@ Commands:
   help           Show this help message
 
 Examples:
-  codesentinel-mcp            # Start server
-  codesentinel-mcp setup      # Configure for Claude
-  codesentinel-mcp help       # Show help
+  codeaudit-mcp            # Start server
+  codeaudit-mcp setup      # Configure for Claude Desktop
+  codeaudit-mcp help       # Show help
 
 Documentation: https://github.com/chetanshivnani/CodeSentinel-MCP
     `);
@@ -58,6 +58,6 @@ Documentation: https://github.com/chetanshivnani/CodeSentinel-MCP
 
   default:
     console.error(`Unknown command: ${command}`);
-    console.error('Run "codesentinel-mcp help" for usage.');
+    console.error('Run "codeaudit-mcp help" for usage.');
     process.exit(1);
 }

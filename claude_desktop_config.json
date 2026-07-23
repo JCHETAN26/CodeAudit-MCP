@@ -1,10 +1,8 @@
 {
   "mcpServers": {
     "codeaudit-mcp": {
-      "command": "node",
-      "args": [
-        "/Users/chetan/Code-Review-Agent-MCP/build/index.js"
-      ]
+      "command": "npx",
+      "args": ["-y", "codeaudit-mcp"]
     }
   }
 }

@@ -1,0 +1,185 @@
+project_name: "CodeAudit-MCP (CodeSentinel)"
+repo_summary: >
+  A TypeScript Model Context Protocol (MCP) server that gives Claude Desktop grounded
+  code-review tools (Semgrep security scan, git diff, repo-context inference, heuristic
+  patch validation) plus an attempted Unsloth/LoRA fine-tune of Llama-3.1-8B and a Flask
+  serving wrapper. The MCP server is real and complete; the fine-tuned model did not
+  improve on loss and its adapter weights are absent from the repo.
+
+claims:
+  - claim: "Built a Model Context Protocol server in TypeScript exposing 6 tools and 1 prompt over stdio to Claude Desktop"
+    claim_type: "architecture"
+    resume_safe: true
+    confidence: 0.97
+    evidence:
+      - path: "src/index.ts"
+        reason: "registerTool/registerPrompt calls and StdioServerTransport connect"
+      - path: "package.json"
+        reason: "@modelcontextprotocol/sdk dependency and build/bin config"
+    notes: "Tools: analyze_repo_context, get_git_diff, security_scan, validate_suggestion, review_code, mock_review."
+
+  - claim: "Integrated Semgrep static analysis via subprocess, parsing JSON and filtering HIGH/CRITICAL findings with a graceful unavailable-fallback"
+    claim_type: "feature"
+    resume_safe: true
+    confidence: 0.95
+    evidence:
+      - path: "src/index.ts"
+        reason: "security_scan handler execFile semgrep --config=auto --json; parseSemgrepOutput; handleSemgrepFailure"
+    notes: ""
+
+  - claim: "Implemented git-diff extraction between two refs as an MCP tool"
+    claim_type: "feature"
+    resume_safe: true
+    confidence: 0.95
+    evidence:
+      - path: "src/index.ts"
+        reason: "get_git_diff handler runs git diff base..head via execFile"
+    notes: ""
+
+  - claim: "Built a repo-context inference engine detecting language, framework, and deployment model across 5 language ecosystems from manifests and file-extension counts"
+    claim_type: "feature"
+    resume_safe: true
+    confidence: 0.9
+    evidence:
+      - path: "src/index.ts"
+        reason: "analyzeRepoContext, inferPrimaryLanguage, inferFramework, inferDeploymentModel, inferProjectConstraints"
+    notes: "JS/TS, Python, Go, Rust, Java; 10+ frameworks."
+
+  - claim: "Implemented a deterministic multi-language patch validator with 14 heuristic checks"
+    claim_type: "feature"
+    resume_safe: true
+    confidence: 0.9
+    evidence:
+      - path: "src/index.ts"
+        reason: "validateSuggestion + helper functions (bracket balance, python colons, Go err/defer, Rust unwrap, SQL concat, etc.)"
+    notes: "Pure functions; the most cleanly testable component."
+
+  - claim: "Packaged the server for npm distribution with a CLI and cross-platform Claude Desktop auto-setup"
+    claim_type: "deployment"
+    resume_safe: true
+    confidence: 0.88
+    evidence:
+      - path: "bin/cli.js"
+        reason: "start/setup/help command dispatch"
+      - path: "bin/setup.js"
+        reason: "OS detection and Claude Desktop config writing"
+      - path: "package.json"
+        reason: "bin field, prepare/build scripts, files whitelist"
+    notes: "Publishing to npm is described but not verified as actually published."
+
+  - claim: "Built a LoRA (r=64, alpha=128) SFT fine-tuning pipeline for Llama-3.1-8B using Unsloth/TRL/PEFT with 4-bit quantization"
+    claim_type: "ml"
+    resume_safe: true
+    confidence: 0.9
+    evidence:
+      - path: "train.py"
+        reason: "FastLanguageModel + get_peft_model r=64/alpha=128, SFTTrainer, A100 args"
+      - path: "requirements.txt"
+        reason: "unsloth, trl, peft, bitsandbytes, transformers"
+      - path: "codesentinel_artifacts/codesentinel_lora_model/adapter_config.json"
+        reason: "confirms LoRA config r=64/alpha=128, 7 target modules"
+    notes: "Claim the PIPELINE/experiment, not a quality win."
+
+  - claim: "Generated a 500-example synthetic instruction dataset for code review from 9 templated vulnerability/perf patterns"
+    claim_type: "data"
+    resume_safe: true
+    confidence: 0.95
+    evidence:
+      - path: "generate_data.py"
+        reason: "9 TEMPLATES, generate_dataset(count=500) with variable substitution"
+      - path: "codesentinel_MASTER_dataset.jsonl"
+        reason: "500 lines; 9 unique assistant-content templates confirmed"
+    notes: "Synthetic; not the SecureCode-v2/OSS mix described in build.txt."
+
+  - claim: "Wrote an evaluation/metric-extraction pipeline computing loss and perplexity from training artifacts"
+    claim_type: "ml"
+    resume_safe: true
+    confidence: 0.85
+    evidence:
+      - path: "evaluate_model.py"
+        reason: "loss/perplexity computation over train/test split"
+      - path: "extract_metrics.py"
+        reason: "parses checkpoint trainer_state.json into training_metrics.json"
+    notes: ""
+
+  - claim: "Exposed the model behind a Flask REST API and defined a Docker image for deployment"
+    claim_type: "deployment"
+    resume_safe: true
+    confidence: 0.82
+    evidence:
+      - path: "hf_spaces_app.py"
+        reason: "Flask app with /, /review, /status endpoints + CORS"
+      - path: "Dockerfile.vps"
+        reason: "Ubuntu 24.04 image installing requirements and running the app"
+    notes: "API binds 0.0.0.0 with no auth; deploy path unverified (needs weights)."
+
+  - claim: "Fine-tuning improved code-review model quality/accuracy"
+    claim_type: "metric"
+    resume_safe: false
+    confidence: 0.1
+    evidence:
+      - path: "training_metrics.json"
+        reason: "loss 2.3934 -> 2.3966 (loss_improvement_percent = -0.14%): no improvement"
+      - path: "codesentinel_artifacts/outputs_codesentinel_lora/checkpoint-500/trainer_state.json"
+        reason: "grad_norm ~2.9e12 at step 500 indicates instability"
+    notes: "UNSAFE. Only measured signal shows no gain."
+
+  - claim: "The trained model is usable/shipped in the repo"
+    claim_type: "ml"
+    resume_safe: false
+    confidence: 0.1
+    evidence:
+      - path: "codesentinel_artifacts/codesentinel_lora_model/"
+        reason: "contains adapter_config.json + tokenizer only; no adapter_model.safetensors weights"
+    notes: "UNSAFE. review_code cannot run as shipped."
+
+  - claim: "Production-ready system with real users"
+    claim_type: "business_impact"
+    resume_safe: false
+    confidence: 0.05
+    evidence:
+      - path: "PROJECT_STATUS.md"
+        reason: "self-authored 'PRODUCTION READY' claim; no CI, no LICENSE, no usage data"
+    notes: "UNSAFE."
+
+safe_claims:
+  - "Built a TypeScript MCP server exposing 6 tools + 1 prompt over stdio for Claude Desktop"
+  - "Integrated Semgrep security scanning with HIGH/CRITICAL filtering and failure fallback"
+  - "Implemented git-diff extraction and repo-context inference across 5 language ecosystems"
+  - "Built a 14-check deterministic multi-language patch validator"
+  - "Packaged for npm with a CLI and cross-platform Claude Desktop auto-setup"
+  - "Built a LoRA (r=64/alpha=128) Unsloth SFT pipeline for Llama-3.1-8B with 4-bit quantization"
+  - "Generated a 500-example synthetic code-review dataset (500 training steps)"
+  - "Wrote loss/perplexity evaluation and metric-extraction scripts"
+  - "Exposed a Flask REST inference API and authored a Docker image"
+
+risky_claims:
+  - claim: "Fine-tuned Llama-3.1-8B to deliver Principal-Engineer-grade reviews"
+    reason: "Training loss did not improve; adapter weights are missing; no eval vs. base model"
+    safer_alternative: "Built and ran a LoRA SFT pipeline for Llama-3.1-8B on a 500-example dataset; documented that the run did not reduce loss and identified instability (exploding grad norm) as follow-up work"
+  - claim: "Production-grade / production-ready code review platform used by developers"
+    reason: "No CI/CD, no LICENSE, no deployment or usage evidence"
+    safer_alternative: "Built a locally-runnable, npm-installable MCP code-review server integrated with Claude Desktop"
+  - claim: "Trained on SecureCode-v2 and OSS human reviews"
+    reason: "dataset_prep.py is a stub; real data is synthetic from 9 templates"
+    safer_alternative: "Generated a synthetic instruction dataset covering security, performance, and concurrency patterns"
+  - claim: "Sub-5-second scans on large repos"
+    reason: "README numbers have no benchmark artifact"
+    safer_alternative: "Set a 120s Semgrep timeout and streamed HIGH/CRITICAL findings back to the host"
+
+missing_evidence:
+  - claim_or_area: "Model quality improvement vs. base"
+    why_it_matters: "Any ML impact claim is indefensible without it"
+    suggested_fix: "Fix training instability, run evaluate_model.py base-vs-LoRA on a held-out set, report delta only if positive"
+  - claim_or_area: "Usable model artifact"
+    why_it_matters: "review_code / loader cannot run without adapter weights"
+    suggested_fix: "Commit or externally host adapter_model.safetensors; add an inference smoke test"
+  - claim_or_area: "Automated testing / CI"
+    why_it_matters: "Backs the 'tests pass' and reliability claims"
+    suggested_fix: "Add .github/workflows running tsc --noEmit and npm test; convert smoke tests to assertions"
+  - claim_or_area: "Detection precision/recall"
+    why_it_matters: "Quantifies the tool's real value"
+    suggested_fix: "Label vulnerable-app/ seeds and measure catch rate of security_scan + validate_suggestion"
+  - claim_or_area: "License"
+    why_it_matters: "README claims MIT but no LICENSE file exists"
+    suggested_fix: "Add a LICENSE file"

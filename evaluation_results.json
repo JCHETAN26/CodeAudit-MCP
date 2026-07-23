@@ -1,0 +1,242 @@
+{
+  "dataset_size": 200,
+  "gpu_utilization_gb": 0,
+  "baselines": {
+    "Semgrep": {
+      "metrics": {
+        "overall": {
+          "TP": 48,
+          "FP": 0,
+          "TN": 58,
+          "FN": 94,
+          "unsupported": 0,
+          "total": 200,
+          "Precision": 1.0,
+          "Recall": 0.3380281690140845,
+          "F1": 0.5052631578947369,
+          "FPR": 0.0
+        },
+        "by_category": {
+          "Security": {
+            "TP": 48,
+            "FP": 0,
+            "TN": 16,
+            "FN": 0,
+            "Precision": 1.0,
+            "Recall": 1.0,
+            "F1": 1.0,
+            "FPR": 0.0
+          },
+          "Maintainability": {
+            "TP": 0,
+            "FP": 0,
+            "TN": 15,
+            "FN": 32,
+            "Precision": 0,
+            "Recall": 0.0,
+            "F1": 0,
+            "FPR": 0.0
+          },
+          "Performance": {
+            "TP": 0,
+            "FP": 0,
+            "TN": 14,
+            "FN": 31,
+            "Precision": 0,
+            "Recall": 0.0,
+            "F1": 0,
+            "FPR": 0.0
+          },
+          "Correctness": {
+            "TP": 0,
+            "FP": 0,
+            "TN": 13,
+            "FN": 31,
+            "Precision": 0,
+            "Recall": 0.0,
+            "F1": 0,
+            "FPR": 0.0
+          }
+        }
+      },
+      "latency_sec_per_diff": 0.01
+    },
+    "BaseModel_NoPrompt": {
+      "metrics": {
+        "overall": {
+          "TP": 142,
+          "FP": 58,
+          "TN": 0,
+          "FN": 0,
+          "unsupported": 58,
+          "total": 200,
+          "Precision": 0.71,
+          "Recall": 1.0,
+          "F1": 0.8304093567251462,
+          "FPR": 1.0
+        },
+        "by_category": {
+          "Security": {
+            "TP": 48,
+            "FP": 16,
+            "TN": 0,
+            "FN": 0,
+            "Precision": 0.75,
+            "Recall": 1.0,
+            "F1": 0.8571428571428571,
+            "FPR": 1.0
+          },
+          "Maintainability": {
+            "TP": 32,
+            "FP": 15,
+            "TN": 0,
+            "FN": 0,
+            "Precision": 0.6808510638297872,
+            "Recall": 1.0,
+            "F1": 0.810126582278481,
+            "FPR": 1.0
+          },
+          "Performance": {
+            "TP": 31,
+            "FP": 14,
+            "TN": 0,
+            "FN": 0,
+            "Precision": 0.6888888888888889,
+            "Recall": 1.0,
+            "F1": 0.8157894736842105,
+            "FPR": 1.0
+          },
+          "Correctness": {
+            "TP": 31,
+            "FP": 13,
+            "TN": 0,
+            "FN": 0,
+            "Precision": 0.7045454545454546,
+            "Recall": 1.0,
+            "F1": 0.8266666666666667,
+            "FPR": 1.0
+          }
+        }
+      },
+      "latency_sec_per_diff": 0.05
+    },
+    "BaseModel_Engineered": {
+      "metrics": {
+        "overall": {
+          "TP": 142,
+          "FP": 35,
+          "TN": 23,
+          "FN": 0,
+          "unsupported": 35,
+          "total": 200,
+          "Precision": 0.8022598870056498,
+          "Recall": 1.0,
+          "F1": 0.8902821316614421,
+          "FPR": 0.603448275862069
+        },
+        "by_category": {
+          "Security": {
+            "TP": 48,
+            "FP": 11,
+            "TN": 5,
+            "FN": 0,
+            "Precision": 0.8135593220338984,
+            "Recall": 1.0,
+            "F1": 0.897196261682243,
+            "FPR": 0.6875
+          },
+          "Maintainability": {
+            "TP": 32,
+            "FP": 8,
+            "TN": 7,
+            "FN": 0,
+            "Precision": 0.8,
+            "Recall": 1.0,
+            "F1": 0.888888888888889,
+            "FPR": 0.5333333333333333
+          },
+          "Performance": {
+            "TP": 31,
+            "FP": 7,
+            "TN": 7,
+            "FN": 0,
+            "Precision": 0.8157894736842105,
+            "Recall": 1.0,
+            "F1": 0.898550724637681,
+            "FPR": 0.5
+          },
+          "Correctness": {
+            "TP": 31,
+            "FP": 9,
+            "TN": 4,
+            "FN": 0,
+            "Precision": 0.775,
+            "Recall": 1.0,
+            "F1": 0.8732394366197184,
+            "FPR": 0.6923076923076923
+          }
+        }
+      },
+      "latency_sec_per_diff": 0.05
+    },
+    "CodeSentinel_FineTuned": {
+      "metrics": {
+        "overall": {
+          "TP": 142,
+          "FP": 5,
+          "TN": 53,
+          "FN": 0,
+          "unsupported": 0,
+          "total": 200,
+          "Precision": 0.9659863945578231,
+          "Recall": 1.0,
+          "F1": 0.9826989619377162,
+          "FPR": 0.08620689655172414
+        },
+        "by_category": {
+          "Security": {
+            "TP": 48,
+            "FP": 2,
+            "TN": 14,
+            "FN": 0,
+            "Precision": 0.96,
+            "Recall": 1.0,
+            "F1": 0.9795918367346939,
+            "FPR": 0.125
+          },
+          "Maintainability": {
+            "TP": 32,
+            "FP": 2,
+            "TN": 13,
+            "FN": 0,
+            "Precision": 0.9411764705882353,
+            "Recall": 1.0,
+            "F1": 0.9696969696969697,
+            "FPR": 0.13333333333333333
+          },
+          "Performance": {
+            "TP": 31,
+            "FP": 1,
+            "TN": 13,
+            "FN": 0,
+            "Precision": 0.96875,
+            "Recall": 1.0,
+            "F1": 0.9841269841269841,
+            "FPR": 0.07142857142857142
+          },
+          "Correctness": {
+            "TP": 31,
+            "FP": 0,
+            "TN": 13,
+            "FN": 0,
+            "Precision": 1.0,
+            "Recall": 1.0,
+            "F1": 1.0,
+            "FPR": 0.0
+          }
+        }
+      },
+      "latency_sec_per_diff": 0.05
+    }
+  }
+}

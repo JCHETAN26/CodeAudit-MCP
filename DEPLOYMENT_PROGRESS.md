@@ -122,7 +122,7 @@ npm test
 - `build/index.js` (MCP server - compiled)
 - `claude_desktop_config.json` (Already configured)
 - `model_loader.py` (Works locally and on HF)
-- `codesentinel_review.py` (Works locally)
+- `codeaudit_review.py` (Works locally)
 
 ## 🔧 Key Constants
 

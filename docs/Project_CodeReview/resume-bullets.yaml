@@ -1,0 +1,93 @@
+project_name: "CodeAudit-MCP (CodeSentinel)"
+
+bullet_rules:
+  style: "STAR-compressed"
+  formula: "Action + technical specificity + evidence-backed impact"
+  avoid:
+    - "long story format"
+    - "unsupported metrics"
+    - "vague buzzwords"
+    - "fake production claims"
+
+bullets:
+  ai_engineer:
+    - bullet: "Built a TypeScript Model Context Protocol (MCP) server exposing 6 tools and 1 prompt over stdio to Claude Desktop, grounding LLM code review in real git diffs and Semgrep findings."
+      skills_covered: ["MCP", "TypeScript", "LLM tool integration"]
+      evidence: ["src/index.ts", "package.json"]
+      confidence: 0.95
+      risk: "low"
+    - bullet: "Integrated Semgrep (--config=auto) as an MCP tool, parsing JSON output and filtering HIGH/CRITICAL findings with a graceful fallback when the scanner is unavailable."
+      skills_covered: ["static analysis", "subprocess orchestration"]
+      evidence: ["src/index.ts"]
+      confidence: 0.9
+      risk: "low"
+    - bullet: "Built a LoRA (r=64, alpha=128) SFT pipeline for Llama-3.1-8B using Unsloth/TRL/PEFT with 4-bit quantization, on a 500-example synthetic review dataset across 500 training steps."
+      skills_covered: ["LoRA/PEFT", "Unsloth", "quantization", "dataset engineering"]
+      evidence: ["train.py", "generate_data.py", "codesentinel_artifacts/codesentinel_lora_model/adapter_config.json"]
+      confidence: 0.85
+      risk: "medium"
+    - bullet: "Authored a repo-context inference engine that detects primary language, framework, and deployment model across 5 language ecosystems from build manifests and file-extension analysis."
+      skills_covered: ["heuristics", "TypeScript", "language detection"]
+      evidence: ["src/index.ts"]
+      confidence: 0.9
+      risk: "low"
+
+  backend_engineer:
+    - bullet: "Orchestrated git, Semgrep, and Python subprocesses from a Node.js server using execFile/spawn with argument arrays, per-call timeouts, and structured stdout/stderr error formatting."
+      skills_covered: ["Node.js", "child_process", "error handling"]
+      evidence: ["src/index.ts"]
+      confidence: 0.92
+      risk: "low"
+    - bullet: "Implemented a 14-check deterministic patch validator (bracket balance, merge markers, Python colons, Go error/defer, Rust unwrap, SQL-concat) spanning 5 language families as pure, testable functions."
+      skills_covered: ["algorithms", "static heuristics", "TypeScript"]
+      evidence: ["src/index.ts"]
+      confidence: 0.9
+      risk: "low"
+    - bullet: "Exposed a Llama-3.1-8B model behind a Flask REST API (/review, /status, health) with CORS and request validation, and defined an Ubuntu-24.04 Docker image with a healthcheck for deployment."
+      skills_covered: ["Flask", "REST", "Docker"]
+      evidence: ["hf_spaces_app.py", "Dockerfile.vps"]
+      confidence: 0.82
+      risk: "medium"
+    - bullet: "Bridged the Node MCP server to a Python inference process over stdin/stdout JSON with a 3-minute timeout and spawn/exit/parse failure handling."
+      skills_covered: ["IPC", "Node.js", "Python"]
+      evidence: ["src/index.ts", "codeaudit_review.py"]
+      confidence: 0.88
+      risk: "low"
+
+  devops_engineer:
+    - bullet: "Packaged the server for npm distribution with a bin CLI (start/setup/help) and a cross-platform script that auto-writes the Claude Desktop MCP configuration on macOS, Windows, and Linux."
+      skills_covered: ["npm packaging", "CLI", "cross-platform scripting"]
+      evidence: ["package.json", "bin/cli.js", "bin/setup.js"]
+      confidence: 0.85
+      risk: "low"
+    - bullet: "Containerized the Python inference service in a single Ubuntu-24.04 Dockerfile with pinned dependency install and a runtime healthcheck."
+      skills_covered: ["Docker"]
+      evidence: ["Dockerfile.vps"]
+      confidence: 0.8
+      risk: "medium"
+
+  data_engineer: []
+  # Not a relevant role: the only data work is synthetic JSONL generation from 9 templates
+  # (generate_data.py). No pipelines, warehouses, streaming, or orchestration exist.
+
+  full_stack_engineer: []
+  # Not a relevant role: there is no frontend/UI. Backend surfaces are the MCP stdio server
+  # and a Flask JSON API only. Use the backend_engineer bullets instead.
+
+best_overall_bullets:
+  - bullet: "Built a TypeScript MCP server that gives Claude Desktop grounded code review — 6 tools spanning Semgrep security scans, git-diff extraction, 5-language repo-context inference, and a 14-check patch validator."
+    best_for_roles: ["ai_engineer", "backend_engineer", "developer_tooling"]
+    reason: "Captures the strongest, fully-verified part of the project in one line"
+    evidence: ["src/index.ts", "package.json"]
+    confidence: 0.95
+  - bullet: "Engineered a LoRA/Unsloth fine-tuning pipeline for Llama-3.1-8B (4-bit) with synthetic dataset generation and a loss/perplexity evaluation harness."
+    best_for_roles: ["ai_engineer", "ml_engineer"]
+    reason: "Shows ML pipeline breadth; phrased as pipeline work, not a quality claim"
+    evidence: ["train.py", "generate_data.py", "evaluate_model.py", "extract_metrics.py"]
+    confidence: 0.85
+
+notes: >
+  Do not claim the fine-tune improved the model: the only measured metric (training loss)
+  went from 2.3934 to 2.3966 (no improvement), and the adapter weights are absent from the
+  repo. Present ML work as "built and ran the pipeline / experiment," never as an accuracy win.
+  Avoid "production-ready" and "real users" — no CI, LICENSE, or usage evidence exists.

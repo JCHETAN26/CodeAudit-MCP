@@ -1,0 +1,205 @@
+{
+  "project_id": "codeaudit-mcp",
+  "project_name": "CodeAudit-MCP (CodeSentinel)",
+  "repo_name": "Code-Review-Agent-MCP",
+  "categories": [
+    "AI Engineering",
+    "Developer Tooling",
+    "Backend Engineering",
+    "Machine Learning Engineering"
+  ],
+  "one_line_pitch": "A TypeScript MCP server that gives Claude Desktop grounded code-review tools (Semgrep scanning, git diff, repo-context inference, heuristic patch validation), plus an attempted LoRA fine-tune of Llama-3.1-8B and a Flask serving wrapper.",
+  "problem": "In-editor LLM code review is generic and ungrounded: it doesn't see the exact diff, run real static analysis, or respect repo context, and it can suggest broken patches.",
+  "why_it_matters": "Demonstrates practical MCP server design and LLM tool integration: typed tools, safe subprocess orchestration of git/semgrep, output parsing, failure handling, and a full LoRA fine-tuning pipeline.",
+  "architecture": {
+    "summary": "A Node.js + TypeScript process speaks MCP over stdio to Claude Desktop, exposing tools that shell out to git/semgrep/python3 and read repo manifests. A review_code tool spawns a Python bridge that loads Llama-3.1-8B (4-bit) + a LoRA adapter. A Flask app can serve the same loader over REST.",
+    "components": [
+      "MCP server (src/index.ts) with 6 tools + 1 prompt over stdio",
+      "Repo-context inference engine (manifests + extension counts)",
+      "14-check multi-language patch validator (pure functions)",
+      "Semgrep and git subprocess integrations",
+      "Python model bridge (codeaudit_review.py) + loader (model_loader.py, 4-bit + LoRA)",
+      "LoRA/Unsloth training pipeline (generate_data.py, train.py, evaluate_model.py, extract_metrics.py)",
+      "Flask REST API (hf_spaces_app.py) + Dockerfile.vps",
+      "npm CLI + cross-platform Claude Desktop setup (bin/cli.js, bin/setup.js)"
+    ],
+    "data_flow": [
+      "Claude Desktop launches node build/index.js and connects over stdio",
+      "Model calls a tool; zod validates args",
+      "security_scan / get_git_diff execFile semgrep / git, parse output, return text",
+      "analyze_repo_context reads manifests + walks tree, returns inferred context JSON",
+      "review_code spawns python3 codeaudit_review.py, pipes JSON on stdin, model_loader returns review JSON",
+      "validate_suggestion runs pure heuristics on a proposed diff",
+      "Offline: generate_data.py -> dataset -> train.py -> checkpoint-500 -> extract_metrics/evaluate"
+    ]
+  },
+  "tech_stack": [
+    "TypeScript", "JavaScript (ESM)", "Python", "@modelcontextprotocol/sdk", "zod",
+    "Semgrep", "git", "Node.js child_process", "Unsloth", "TRL", "PEFT/LoRA",
+    "Transformers", "bitsandbytes (4-bit)", "PyTorch", "Datasets", "Flask", "flask-cors",
+    "Docker", "npm packaging", "Llama-3.1-8B-Instruct"
+  ],
+  "skills": [
+    "MCP server development", "TypeScript", "Node.js subprocess orchestration",
+    "Semgrep static-analysis integration", "zod schema validation",
+    "LoRA/PEFT fine-tuning with Unsloth", "4-bit quantized inference",
+    "synthetic dataset engineering", "Python/Transformers", "Flask REST API",
+    "Docker", "npm CLI packaging", "git diff processing"
+  ],
+  "features": [
+    "6 MCP tools + 1 prompt over stdio",
+    "Semgrep HIGH/CRITICAL scanning with graceful fallback",
+    "git diff extraction between two refs",
+    "language/framework/deployment inference across 5 ecosystems",
+    "14-check multi-language patch validation",
+    "npm CLI + cross-platform Claude Desktop auto-setup",
+    "LoRA SFT pipeline + synthetic dataset generation",
+    "loss/perplexity evaluation and metric extraction",
+    "Flask inference API + Docker image"
+  ],
+  "metrics": [
+    {"metric": "MCP tools implemented", "value": "6 tools + 1 prompt", "source": "src/index.ts", "resume_safe": true, "confidence": 1.0},
+    {"metric": "Patch-validation checks", "value": "14", "source": "src/index.ts", "resume_safe": true, "confidence": 0.95},
+    {"metric": "Languages inferred", "value": "5 families", "source": "src/index.ts", "resume_safe": true, "confidence": 0.9},
+    {"metric": "Training steps", "value": "500", "source": "training_metrics.json", "resume_safe": true, "confidence": 1.0},
+    {"metric": "LoRA config", "value": "r=64, alpha=128", "source": "train.py / adapter_config.json", "resume_safe": true, "confidence": 1.0},
+    {"metric": "Dataset size", "value": "500 rows, 9 templates", "source": "codesentinel_MASTER_dataset.jsonl", "resume_safe": true, "confidence": 1.0},
+    {"metric": "Training loss (init->final)", "value": "2.3934 -> 2.3966 (-0.14%, no improvement)", "source": "training_metrics.json", "resume_safe": false, "confidence": 1.0},
+    {"metric": "Perplexity", "value": "~10.99", "source": "training_metrics.json", "resume_safe": false, "confidence": 0.9},
+    {"metric": "Gradient norm @ step 500", "value": "~2.9e12 (instability)", "source": "trainer_state.json", "resume_safe": false, "confidence": 1.0}
+  ],
+  "safe_claims": [
+    "Built a TypeScript MCP server exposing 6 tools + 1 prompt over stdio for Claude Desktop",
+    "Integrated Semgrep security scanning with HIGH/CRITICAL filtering and failure fallback",
+    "Implemented git-diff extraction and repo-context inference across 5 language ecosystems",
+    "Built a 14-check deterministic multi-language patch validator",
+    "Packaged for npm with a CLI and cross-platform Claude Desktop auto-setup",
+    "Built a LoRA (r=64/alpha=128) Unsloth SFT pipeline for Llama-3.1-8B with 4-bit quantization",
+    "Generated a 500-example synthetic code-review dataset (500 training steps)",
+    "Wrote loss/perplexity evaluation and metric-extraction scripts",
+    "Exposed a Flask REST inference API and authored a Docker image"
+  ],
+  "risky_claims": [
+    "Fine-tuning improved model review quality/accuracy (loss did not improve; no eval vs base)",
+    "The trained model is shipped/usable in the repo (adapter weights are missing)",
+    "Production-ready system with real users (no CI, no LICENSE, no usage data)",
+    "Trained on SecureCode-v2 / OSS human reviews (dataset is synthetic; dataset_prep.py is a stub)",
+    "Sub-5-second scans on large repos (no benchmark artifact)",
+    "Comprehensive test suite of 10+ tests (only smoke scripts; no CI)"
+  ],
+  "evidence_sources": [
+    "src/index.ts", "package.json", "tsconfig.json", "bin/cli.js", "bin/setup.js",
+    "train.py", "generate_data.py", "model_loader.py", "evaluate_model.py", "extract_metrics.py",
+    "codeaudit_review.py", "hf_spaces_app.py", "Dockerfile.vps",
+    "codesentinel_MASTER_dataset.jsonl", "training_metrics.json",
+    "codesentinel_artifacts/codesentinel_lora_model/adapter_config.json",
+    "codesentinel_artifacts/outputs_codesentinel_lora/checkpoint-500/trainer_state.json",
+    "scripts/test-tools.js", "scripts/test-e2e.js", "scripts/test-dependencies.js"
+  ],
+  "role_fit": {
+    "data_engineer": {
+      "score": 25,
+      "reasons": [
+        "Only synthetic JSONL generation from 9 templates",
+        "No pipelines, warehouses, streaming, or orchestration"
+      ]
+    },
+    "ai_engineer": {
+      "score": 82,
+      "reasons": [
+        "Real MCP server with typed tools and LLM host integration",
+        "Full LoRA/Unsloth fine-tuning pipeline",
+        "Docked because model result is unproven and weights are missing"
+      ]
+    },
+    "backend_engineer": {
+      "score": 78,
+      "reasons": [
+        "Strict TypeScript server with safe subprocess orchestration and error handling",
+        "Flask API + IPC bridge",
+        "No formal test framework or CI"
+      ]
+    },
+    "full_stack_engineer": {
+      "score": 30,
+      "reasons": [
+        "Backend + a Flask JSON API only",
+        "No frontend/UI code"
+      ]
+    },
+    "devops_engineer": {
+      "score": 40,
+      "reasons": [
+        "Dockerfile + cross-platform npm setup script",
+        "No CI/CD, orchestration, or IaC"
+      ]
+    },
+    "analytics_engineer": {
+      "score": 15,
+      "reasons": [
+        "No analytics, dbt, or BI work present"
+      ]
+    }
+  },
+  "resume_bullets": {
+    "data_engineer": [],
+    "ai_engineer": [
+      "Built a TypeScript MCP server exposing 6 tools and 1 prompt over stdio to Claude Desktop, grounding LLM code review in real git diffs and Semgrep findings.",
+      "Integrated Semgrep (--config=auto) as an MCP tool, parsing JSON and filtering HIGH/CRITICAL findings with a graceful unavailable-fallback.",
+      "Built a LoRA (r=64, alpha=128) SFT pipeline for Llama-3.1-8B using Unsloth/TRL/PEFT with 4-bit quantization on a 500-example synthetic dataset across 500 steps."
+    ],
+    "backend_engineer": [
+      "Orchestrated git, Semgrep, and Python subprocesses from Node.js using execFile/spawn with timeouts and structured error handling.",
+      "Implemented a 14-check deterministic multi-language patch validator as pure, testable functions.",
+      "Bridged the Node MCP server to a Python inference process over stdin/stdout JSON with a 3-minute timeout and full failure handling."
+    ],
+    "full_stack_engineer": [],
+    "devops_engineer": [
+      "Packaged the server for npm with a bin CLI and a cross-platform script that auto-writes the Claude Desktop MCP config on macOS, Windows, and Linux.",
+      "Containerized the Python inference service in an Ubuntu-24.04 Dockerfile with pinned deps and a runtime healthcheck."
+    ],
+    "analytics_engineer": []
+  },
+  "interview_notes": {
+    "short_pitch": "An MCP server that gives Claude Desktop grounded code-review tools I built in TypeScript: real git diff, Semgrep HIGH/CRITICAL scanning, repo-context inference, and a 14-check patch validator, plus a LoRA fine-tuning pipeline for Llama-3.1-8B.",
+    "deep_dive": "Strict-TS server via @modelcontextprotocol/sdk over stdio; zod-typed tools shell out to git/semgrep/python3 with timeouts and failure fallbacks; context inference from manifests + extension counts; pure-function multi-language patch validation; review_code spawns a Python 4-bit + LoRA loader; offline pipeline generates a 500-row synthetic dataset and runs Unsloth/TRL SFT with loss/perplexity eval. Packaged for npm; Flask API + Dockerfile for optional serving.",
+    "likely_questions": [
+      "What is MCP and why use it over plain prompting?",
+      "How do tools stay grounded / avoid hallucinated findings?",
+      "How does security_scan handle Semgrep failure?",
+      "Why LoRA + 4-bit; what do r and alpha control?",
+      "What were your fine-tuning results?",
+      "Can I run the trained model from the repo?",
+      "Is the dataset real?",
+      "What's your testing / CI story?",
+      "Is the Flask API secure?",
+      "How would you measure real bug-detection value?"
+    ],
+    "weak_areas": [
+      "Fine-tune did not converge (loss flat, exploding grad norm)",
+      "LoRA adapter weights absent from repo",
+      "No CI/CD and no LICENSE file",
+      "Only smoke tests, no assertion framework",
+      "Synthetic dataset; docs overstate maturity",
+      "Flask endpoint has no authentication"
+    ]
+  },
+  "verification": {
+    "overall_confidence": 0.86,
+    "strongest_evidence": [
+      "src/index.ts (complete MCP server: 6 tools, 14 validator checks, context inference)",
+      "package.json (MCP SDK + zod deps, bin, build/test scripts)",
+      "train.py + adapter_config.json (LoRA r=64/alpha=128 pipeline)",
+      "training_metrics.json + trainer_state.json (actual, non-improving training numbers)",
+      "generate_data.py + codesentinel_MASTER_dataset.jsonl (500 synthetic examples)"
+    ],
+    "missing_evidence": [
+      "LoRA adapter weights (adapter_model.safetensors) not committed",
+      "No model eval vs. base model / no quality metric",
+      "No CI/CD (.github/workflows) and no LICENSE file",
+      "No latency/detection benchmark artifacts",
+      "No evidence of production deployment or real users"
+    ],
+    "repo_scan_notes": "Scanned README, PROJECT_STATUS, build.txt, package.json, tsconfig, full src/index.ts, all Python ML files, scripts, artifacts, Dockerfile, and git log (3 commits). Server implementation is real and complete. ML pipeline exists but the training run shows no loss improvement and its weights are absent, so all model-quality/impact claims are unsafe. Repo docs use aspirational 'production-ready/real users' language unsupported by evidence."
+  }
+}

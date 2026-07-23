@@ -1,0 +1,162 @@
+project_name: "CodeAudit-MCP (CodeSentinel)"
+
+skills:
+  - skill: "TypeScript"
+    category: "language"
+    depth: "advanced"
+    resume_safe: true
+    confidence: 0.95
+    evidence:
+      - path: "src/index.ts"
+        reason: "~1213-line strict-mode server with typed models and pure helpers"
+      - path: "tsconfig.json"
+        reason: "strict, NodeNext, ES2022 build config"
+    notes: ""
+
+  - skill: "Model Context Protocol (MCP) server development"
+    category: "ml_ai"
+    depth: "intermediate"
+    resume_safe: true
+    confidence: 0.92
+    evidence:
+      - path: "src/index.ts"
+        reason: "McpServer, registerTool/registerPrompt, StdioServerTransport"
+      - path: "bin/setup.js"
+        reason: "writes Claude Desktop mcpServers config"
+    notes: "Current, in-demand LLM-integration skill."
+
+  - skill: "Node.js subprocess orchestration & error handling"
+    category: "backend"
+    depth: "intermediate"
+    resume_safe: true
+    confidence: 0.9
+    evidence:
+      - path: "src/index.ts"
+        reason: "execFile/spawn for git, semgrep, python3; timeouts; stdout/stderr parsing; failure fallbacks"
+    notes: ""
+
+  - skill: "Static analysis integration (Semgrep)"
+    category: "backend"
+    depth: "intermediate"
+    resume_safe: true
+    confidence: 0.88
+    evidence:
+      - path: "src/index.ts"
+        reason: "semgrep --config=auto --json invocation, result parsing, severity filtering"
+    notes: ""
+
+  - skill: "Zod schema validation"
+    category: "framework"
+    depth: "intermediate"
+    resume_safe: true
+    confidence: 0.85
+    evidence:
+      - path: "src/index.ts"
+        reason: "per-tool inputSchema definitions"
+    notes: ""
+
+  - skill: "LoRA / PEFT fine-tuning with Unsloth & TRL"
+    category: "ml_ai"
+    depth: "intermediate"
+    resume_safe: true
+    confidence: 0.85
+    evidence:
+      - path: "train.py"
+        reason: "FastLanguageModel, get_peft_model r=64/alpha=128, SFTTrainer"
+      - path: "codesentinel_artifacts/codesentinel_lora_model/adapter_config.json"
+        reason: "confirms LoRA hyperparameters"
+    notes: "Pipeline-building depth; the run itself did not converge."
+
+  - skill: "Quantized model inference (bitsandbytes 4-bit)"
+    category: "ml_ai"
+    depth: "intermediate"
+    resume_safe: true
+    confidence: 0.82
+    evidence:
+      - path: "model_loader.py"
+        reason: "BitsAndBytesConfig nf4 4-bit, PeftModel adapter loading"
+    notes: "Adapter weights absent, so end-to-end run unverified."
+
+  - skill: "Dataset engineering (synthetic instruction data)"
+    category: "ml_ai"
+    depth: "basic"
+    resume_safe: true
+    confidence: 0.85
+    evidence:
+      - path: "generate_data.py"
+        reason: "templated JSONL generation, 500 examples"
+      - path: "codesentinel_MASTER_dataset.jsonl"
+        reason: "chat-format messages dataset"
+    notes: "Synthetic, 9 templates."
+
+  - skill: "Python (Transformers/PyTorch ecosystem)"
+    category: "language"
+    depth: "intermediate"
+    resume_safe: true
+    confidence: 0.85
+    evidence:
+      - path: "model_loader.py"
+        reason: "tokenizer/model loading, generation loop"
+      - path: "evaluate_model.py"
+        reason: "loss/perplexity evaluation"
+    notes: ""
+
+  - skill: "Flask REST API"
+    category: "backend"
+    depth: "basic"
+    resume_safe: true
+    confidence: 0.82
+    evidence:
+      - path: "hf_spaces_app.py"
+        reason: "/, /review, /status endpoints with CORS and input validation"
+    notes: "No auth on the endpoint."
+
+  - skill: "Docker containerization"
+    category: "devops"
+    depth: "basic"
+    resume_safe: true
+    confidence: 0.8
+    evidence:
+      - path: "Dockerfile.vps"
+        reason: "Ubuntu 24.04 image, dependency install, healthcheck, CMD"
+    notes: "Single Dockerfile; no compose/orchestration."
+
+  - skill: "npm packaging & CLI distribution"
+    category: "devops"
+    depth: "intermediate"
+    resume_safe: true
+    confidence: 0.85
+    evidence:
+      - path: "package.json"
+        reason: "bin field, prepare hook, files whitelist, engines"
+      - path: "bin/cli.js"
+        reason: "start/setup/help CLI"
+    notes: ""
+
+  - skill: "Git tooling / diff processing"
+    category: "backend"
+    depth: "basic"
+    resume_safe: true
+    confidence: 0.85
+    evidence:
+      - path: "src/index.ts"
+        reason: "git diff ref..ref extraction and formatting"
+    notes: ""
+
+missing_or_unverified_skills:
+  - skill: "CI/CD (GitHub Actions, pipelines)"
+    reason: "No .github/workflows or any CI config in the repo"
+  - skill: "Automated testing frameworks (Jest/Vitest/PyTest)"
+    reason: "Only custom Node smoke scripts; no assertion framework, no coverage"
+  - skill: "Kubernetes / orchestration"
+    reason: "Only a single Dockerfile; no k8s/compose manifests"
+  - skill: "Cloud platforms (AWS/GCP/Azure)"
+    reason: "HF Spaces + generic VPS mentioned in docs; no cloud SDK/IaC in code"
+  - skill: "Frontend / full-stack UI"
+    reason: "No frontend code; only a Flask JSON API and the MCP server"
+  - skill: "Data engineering (pipelines, warehouses, streaming)"
+    reason: "Only synthetic JSONL generation; no ETL/Kafka/dbt/warehouse"
+  - skill: "Demonstrated model-quality improvement from fine-tuning"
+    reason: "Training loss did not improve and adapter weights are missing"
+  - skill: "RAG / vector databases"
+    reason: "Not present; context is manifest/extension-based, not embeddings"
