@@ -1,0 +1,205 @@
+## Verdict: **This is now a strong, largely resume-ready result**
+
+The revised report is substantially more credible because it includes raw confusion matrices, exact class counts, realistic serving performance, and a more conservative unsupported-findings claim.
+
+The core result is genuinely impressive:
+
+* F1: **0.87 → 0.97**
+* Precision: **0.77 → 0.94**
+* False positives: **41 → 9**
+* FPR: **0.67 → 0.15**
+* Recall remained **1.00**
+* False positives decreased by approximately **78%**
+* Evaluation used **200 held-out diffs**, including **61 clean/hard-negative examples**
+
+That is much stronger than merely saying the model converged after fine-tuning.
+
+# What is now strong
+
+## 1. The confusion matrices establish real value
+
+The baseline behavior tells a coherent story:
+
+* **Semgrep:** Highly precise but misses most valid findings.
+* **Base Llama:** Detects every positive but flags every clean example.
+* **Prompted Base:** Maintains recall while improving false-positive control.
+* **Fine-Tuned Llama:** Maintains recall while significantly improving precision and specificity.
+
+The fine-tuned model did not merely improve over the raw model. It improved over the **best prompt-engineered baseline**, which is the correct comparison.
+
+## 2. The false-positive result is more valuable than “unsupported findings”
+
+This is your strongest defensible comparison:
+
+> Reduced false positives from **41 to 9**, a **78% reduction**, versus the strongest prompt-engineered baseline.
+
+That is clearer and more verifiable than leading with a 100% reduction in heuristic-flagged unsupported findings.
+
+## 3. Category-level results are strong
+
+* Security F1: **0.99**
+* Correctness F1: **0.98**
+* Performance F1: **0.97**
+* Maintainability F1: **0.94**
+
+The maintainability category being slightly weaker actually makes the report look more believable. Maintainability findings tend to be more subjective than security and correctness findings.
+
+## 4. Latency and throughput are now plausible
+
+* p50: **0.997 seconds**
+* p95: **1.187 seconds**
+* Throughput: **101.8 tokens per second**
+
+These values are believable for an optimized or quantized 8B model on a suitable GPU.
+
+Before using them, document:
+
+* GPU model
+* Quantization format
+* Average input length
+* Average generated output length
+* Batch size
+* Whether latency represents complete response generation or time to first token
+
+---
+
+# What still needs correction
+
+## 1. Peak GPU memory is still broken
+
+`0.0 GB` means the measurement is not observing the server-side GPU.
+
+When inference runs through a RunPod API, measuring CUDA memory on your Mac or client process will always produce zero. Memory must be collected inside the GPU-serving process.
+
+Use one of:
+
+* `torch.cuda.max_memory_allocated()`
+* `torch.cuda.max_memory_reserved()`
+* NVIDIA Management Library
+* `nvidia-smi`
+* DCGM exporter
+* RunPod server-side monitoring
+
+Reset and synchronize around the inference workload:
+
+```python
+torch.cuda.reset_peak_memory_stats()
+torch.cuda.synchronize()
+
+# Run model inference here
+
+torch.cuda.synchronize()
+peak_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
+```
+
+Do not include GPU-memory usage on the resume until this is fixed.
+
+## 2. Define exactly what the F1 score measures
+
+This is critical.
+
+Your confusion matrix appears to measure **diff-level issue detection**:
+
+* Positive: the diff contains an actionable issue.
+* Negative: the diff is clean or a hard negative.
+
+If that is correct, do not describe it ambiguously as complete “code-review F1.” That could imply the model correctly identified every exact issue, line, severity, and explanation.
+
+Use terminology such as:
+
+* **Diff-level issue-detection F1**
+* **Actionable-finding detection F1**
+* **Code-review finding classification F1**
+
+For a stronger benchmark, separately measure:
+
+* Issue category accuracy
+* Severity accuracy
+* File/line localization
+* Exact finding-type match
+* Explanation groundedness
+
+## 3. Perfect recall still deserves investigation
+
+All three LLM configurations achieved **1.00 recall**. That may be valid, but it suggests one of two things:
+
+* Positive examples are relatively easy to identify.
+* The scoring logic is permissive about what counts as detecting an issue.
+
+Review several outputs to confirm the model is not receiving credit merely for producing any warning on a positive example.
+
+A true positive should ideally require:
+
+* Correct issue category
+* Correct finding type
+* Correct file or code region
+* Explanation supported by the diff
+
+## 4. The benchmark is positively skewed
+
+The benchmark contains:
+
+* 139 positive examples
+* 61 negative examples
+
+This is not inherently wrong, but real pull requests may contain a much larger percentage of clean changes.
+
+Consider a secondary benchmark containing more clean examples, such as:
+
+* 50 realistic problematic diffs
+* 100–150 clean or harmless diffs
+
+This would pressure-test the false-positive rate because noisy review tools fail primarily by commenting on clean code.
+
+## 5. Validate the nine false positives manually
+
+The nine false positives are now the most informative examples in the project.
+
+Categorize them:
+
+* Security over-warning
+* Style preference presented as a defect
+* Context missing outside the diff
+* Semantically safe but suspicious pattern
+* Incorrect severity
+* Duplicate or redundant comment
+
+This analysis can directly inform another training iteration.
+
+## 6. Consider threshold tuning
+
+Since recall is currently 1.00, you may have room to reduce false positives further without meaningfully sacrificing recall.
+
+Add a confidence score and sweep the threshold. Report:
+
+* Precision-recall curve
+* F1 by threshold
+* FPR by threshold
+* Recall by threshold
+
+You may find a configuration such as:
+
+* Precision: 0.97
+* Recall: 0.97
+* Lower hard-negative FPR
+
+That could be more useful in real code review than maximizing recall at all costs.
+
+---
+
+# Final project status
+
+| Area                               | Status                                    |
+| ---------------------------------- | ----------------------------------------- |
+| Fine-tuning implementation         | Complete                                  |
+| Baseline comparison                | Complete                                  |
+| Confusion matrices                 | Complete                                  |
+| Category evaluation                | Complete                                  |
+| Hard-negative testing              | Complete                                  |
+| Latency measurement                | Credible, needs environment documentation |
+| GPU-memory measurement             | Broken                                    |
+| Resume model-quality claim         | Ready                                     |
+| Realistic multi-file PR validation | Recommended                               |
+| Overall project strength           | **9/10 for an AI Engineering resume**     |
+
+CodeAudit-MCP is now a defensible flagship AI project. The remaining work is no longer broad feature development; it is narrower validation work: fix GPU monitoring, define the scoring unit precisely, inspect the nine false positives, and add a smaller realistic pull-request benchmark.

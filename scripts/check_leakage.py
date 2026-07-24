@@ -9,12 +9,10 @@ import os
 import sys
 
 def get_bigrams(text):
-    """Return a set of character bigrams for a given string."""
     text = text.lower()
     return set(text[i:i+2] for i in range(len(text)-1))
 
 def jaccard_similarity(set1, set2):
-    """Calculate Jaccard similarity between two sets."""
     if not set1 or not set2:
         return 0.0
     intersection = len(set1.intersection(set2))
@@ -22,12 +20,10 @@ def jaccard_similarity(set1, set2):
     return intersection / union if union > 0 else 0.0
 
 def extract_diff(sample):
-    """Extract the code diff from the user prompt."""
     messages = sample.get("messages", [])
     for m in messages:
         if m.get("role") == "user":
             content = m.get("content", "")
-            # Return the text after "Please review this diff:\n"
             parts = content.split(":\n", 1)
             return parts[1] if len(parts) > 1 else content
     return ""
@@ -44,17 +40,18 @@ def load_jsonl_diffs(path):
                 sample = json.loads(line)
                 diff = extract_diff(sample)
                 diffs.append({"id": sample.get("metadata", {}).get("id", i), "diff": diff})
-            except Exception as e:
+            except Exception:
                 pass
     return diffs
 
 def main():
     print("="*70)
-    print("CodeSentinel Dataset Leakage Checker")
+    print("CodeAudit-MCP Dataset Leakage Checker")
     print("="*70)
     
-    benchmark_path = "codesentinel_benchmark.jsonl"
-    train_path = "codesentinel_MASTER_dataset.jsonl"
+    benchmark_path = "codeaudit_benchmark.jsonl"
+    # Keeping the original train path for now unless we rename everything
+    train_path = "codeaudit_MASTER_dataset.jsonl" 
     
     if not os.path.exists(benchmark_path):
         print(f"❌ Error: Benchmark {benchmark_path} not found.")
@@ -75,7 +72,6 @@ def main():
     THRESHOLD = 0.85
     leakage_found = False
     
-    # Fast bigram precomputation
     train_data = [{"id": t["id"], "bigrams": get_bigrams(t["diff"])} for t in train_diffs if t["diff"]]
     
     for b in bench_diffs:
@@ -96,7 +92,7 @@ def main():
             leakage_found = True
             
     if leakage_found:
-        print("\n❌ Benchmark is invalid due to dataset leakage. Please remove overlapping examples from the training set or regenerate the benchmark with distinct templates.")
+        print("\n❌ Benchmark is invalid due to dataset leakage.")
         sys.exit(1)
     else:
         print(f"\n✅ PASS: No dataset leakage found (Max similarity threshold < {THRESHOLD*100}%).")

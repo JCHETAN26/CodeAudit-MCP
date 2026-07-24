@@ -1,0 +1,369 @@
+## CodeAudit-MCP benchmark verdict
+
+The results are **very promising**, but I would not place every number on the resume yet.
+
+### Current status
+
+* **Evaluation framework:** Strong
+* **Benchmark design:** Strong in principle
+* **Model-quality results:** Provisionally usable, pending validation
+* **Serving metrics:** Not credible yet
+* **Resume readiness:** Approximately **80% complete**
+
+---
+
+# 1. What looks genuinely strong
+
+* You compared against the correct baselines:
+
+  * Semgrep
+  * Raw base model
+  * Prompt-engineered base model
+  * Fine-tuned model
+* You compared against the **strongest baseline**, not the weakest one.
+* The benchmark includes 200 held-out examples across Python, TypeScript, and Java.
+* You included both vulnerable and clean examples.
+* Hard negatives make the false-positive measurement more meaningful.
+* Category-level results show that the model is not succeeding only on security findings.
+* The progression looks directionally reasonable:
+
+  * Raw model finds almost everything but produces many false positives.
+  * Prompt engineering improves precision.
+  * Fine-tuning further improves precision and false-positive control.
+* Semgrep’s high precision and lower recall are believable for rule-based static analysis.
+
+The most valuable provisional result is:
+
+> **F1 improved from 0.89 to 0.98 versus the strongest prompt-engineered baseline.**
+
+That is the correct comparison for demonstrating fine-tuning value.
+
+---
+
+# 2. Major red flag: the serving metrics
+
+These numbers are almost certainly being measured incorrectly:
+
+* **p50 latency: 0.05 seconds**
+* **p95 latency: 0.06 seconds**
+* **5,120 tokens per second**
+* **0.0 GB peak GPU memory**
+
+For a Llama-3.1-8B model generating an actual code-review response, 50–60 milliseconds of total inference latency would be extraordinarily unlikely on a normal RunPod GPU.
+
+Similarly, 5,120 generated tokens per second would be implausible for ordinary single-request inference. Peak GPU memory of 0.0 GB confirms that the GPU instrumentation is not working.
+
+## Likely causes
+
+Check whether the evaluation is accidentally measuring:
+
+* Prompt construction rather than model generation
+* Cached outputs
+* Mock or placeholder inference
+* Time to first token rather than full response time
+* JSON parsing or scoring latency
+* A local stub instead of the deployed RunPod model
+* Aggregate batch throughput reported as per-request throughput
+* Number of characters rather than tokens
+* An inference function returning precomputed benchmark predictions
+
+## What to fix
+
+Measure each request around the actual generation call:
+
+1. Record start time immediately before sending the model request.
+2. Synchronize the GPU when running locally with CUDA.
+3. Wait until the entire response has been generated.
+4. Record end time after all output tokens are received.
+5. Count generated output tokens using the model tokenizer.
+6. Record GPU memory using the appropriate CUDA or RunPod monitoring API.
+
+Report these separately:
+
+* Time to first token
+* Total generation latency
+* Output tokens
+* Tokens per second
+* Input tokens
+* p50/p95 total latency
+* Peak allocated GPU memory
+* GPU model and quantization level
+
+Do **not** use the current latency, throughput, or memory numbers on the resume.
+
+---
+
+# 3. The model results may be too perfect
+
+The fine-tuned model reports:
+
+* Recall: **1.00**
+* Correctness F1: **1.00**
+* Unsupported findings: **0**
+* Other category F1 scores: **0.97–0.98**
+
+These are possible, but unusually high for real code-review evaluation—especially with only 500 training examples.
+
+This does not automatically mean the results are wrong. It means the benchmark or scoring logic needs aggressive verification.
+
+## Possible explanations
+
+* The synthetic test examples are too similar to training examples.
+* Training and test examples use the same code templates with renamed variables.
+* The benchmark contains obvious single-issue snippets rather than realistic diffs.
+* The evaluator checks broad category labels rather than exact findings.
+* Any mention of an expected category counts as correct.
+* The model learned formatting or label patterns rather than code-review reasoning.
+* Clean examples are too easy to distinguish.
+* One diff contains only one obvious finding.
+* The unsupported-finding heuristic is too permissive.
+
+---
+
+# 4. Verify train–test separation
+
+Exact duplicate exclusion is not sufficient for synthetic datasets.
+
+You should test for:
+
+* Exact duplicate code
+* Whitespace-normalized duplicates
+* Identifier-renamed duplicates
+* Same vulnerability template with different variable names
+* Same code structure with changed literals
+* Similar natural-language explanations
+* Training and test examples generated from the same source template
+
+## Recommended checks
+
+* Token or AST similarity
+* MinHash or locality-sensitive hashing
+* Embedding similarity
+* Normalized code fingerprints
+* Template-family IDs during dataset generation
+
+Every generated example should have metadata such as:
+
+```text
+language
+category
+issue_type
+template_family
+source_id
+split
+```
+
+Ensure the same `template_family` does not appear across training and test sets.
+
+This is one of the most important remaining checks.
+
+---
+
+# 5. Inspect the actual scoring unit
+
+You need to state exactly what F1 measures.
+
+Possible evaluation units include:
+
+* Binary diff classification: issue versus no issue
+* Category classification
+* Individual finding detection
+* File and line localization
+* Severity classification
+* Complete code-review comment quality
+
+These are not equivalent.
+
+An F1 of 0.98 for “does this snippet contain an issue?” is much less impressive than an F1 of 0.98 for correctly identifying the exact issue and location.
+
+## Stronger evaluation contract
+
+A predicted finding should count as a true positive only when it matches:
+
+* Correct file
+* Correct or overlapping line range
+* Correct issue category
+* Correct vulnerability or bug type
+* Acceptable severity
+* Explanation grounded in the code
+
+Report separate metrics for:
+
+* Finding detection
+* Category classification
+* Severity accuracy
+* Line localization
+* Clean-diff classification
+
+---
+
+# 6. Show the raw confusion matrices
+
+Percentages alone hide important information.
+
+For every baseline, output:
+
+* True positives
+* False positives
+* True negatives
+* False negatives
+* Number of positive examples
+* Number of negative examples
+
+For example:
+
+| Model            | TP | FP | TN | FN |
+| ---------------- | -: | -: | -: | -: |
+| Semgrep          |  — |  — |  — |  — |
+| Base Llama       |  — |  — |  — |  — |
+| Prompted Base    |  — |  — |  — |  — |
+| Fine-Tuned Llama |  — |  — |  — |  — |
+
+This will explain values such as:
+
+* Base-model FPR of 1.00
+* Prompted-model FPR of 0.60
+* Fine-tuned FPR of 0.09
+
+Also report:
+
+> Fine-tuned model produced X false positives across Y clean examples.
+
+That is more defensible than reporting only 9%.
+
+---
+
+# 7. Validate “unsupported findings”
+
+The reported reduction from 35 unsupported findings to zero is valuable—but only if the evaluator reliably identifies unsupported comments.
+
+A heuristic can easily misclassify findings.
+
+## Required validation
+
+Manually review at least:
+
+* All fine-tuned model false positives
+* All outputs classified as unsupported
+* A random sample of 30–50 supposedly supported findings
+* All disagreements between Semgrep and the model
+
+Use two labels:
+
+* Supported by the diff
+* Not supported by the diff
+
+For stronger evidence, have another person label a subset independently and calculate agreement.
+
+Until then, avoid saying:
+
+> Reduced hallucinations by 100%.
+
+A safer statement would be:
+
+> Reduced heuristic-flagged unsupported findings from 35 to 0.
+
+After manual validation, you can use stronger wording.
+
+---
+
+# 8. Run realistic multi-file pull-request tests
+
+A benchmark made entirely of small isolated snippets can be useful for model development, but it does not fully prove code-review ability.
+
+Add a smaller secondary benchmark containing perhaps:
+
+* 20–40 realistic pull-request diffs
+* Multiple files
+* Unchanged context
+* Several issues in some pull requests
+* No issues in others
+* Dependencies between files
+* Distracting but harmless changes
+
+Measure:
+
+* Findings per pull request
+* False comments per clean pull request
+* Exact file/line localization
+* Duplicate comments
+* Missed issues
+* Review usefulness
+
+This secondary benchmark can be smaller than the 200-example primary benchmark.
+
+---
+
+# 9. Fix the project naming inconsistency
+
+Your project is referred to as:
+
+* **CodeAudit-MCP**
+* **CodeSentinel**
+
+Choose one name and use it consistently across:
+
+* GitHub repository
+* README
+* Benchmark reports
+* Scripts
+* Model card
+* Resume
+* Demo
+
+A naming mismatch can make the project look assembled from separate components or templates.
+
+---
+
+# 10. What you may safely claim now
+
+You can confidently say that you built:
+
+* A LoRA fine-tuning pipeline for Llama-3.1-8B
+* A frozen 200-diff held-out benchmark
+* Four evaluation baselines
+* Category-level evaluation
+* Hard-negative testing
+* Precision, recall, F1, and FPR reporting
+* A Semgrep-plus-LLM code-review workflow
+* Evaluation across Python, TypeScript, and Java
+
+You should wait before confidently claiming:
+
+* 50–60 ms inference latency
+* 5,120 tokens per second
+* 0 GB GPU usage
+* Production low-latency serving
+* Fully eliminated hallucinations
+* Definitive 0.98 real-world code-review F1
+
+---
+
+# Recommended final validation checklist
+
+## Must fix
+
+* Correct inference-latency measurement
+* Correct GPU-memory measurement
+* Confirm actual model calls are occurring
+* Produce confusion matrices and denominators
+* Run near-duplicate and template-family leakage checks
+* Manually validate unsupported findings
+* Define precisely what constitutes a true positive
+
+## Strong additional validation
+
+* Run the benchmark three times using fixed settings
+* Report mean and variation
+* Add realistic multi-file pull-request evaluation
+* Store raw model outputs
+* Store benchmark hash and model checkpoint
+* Document GPU type and quantization
+* Report severity and line-localization accuracy
+
+---
+
+
+Do not include “pending validation” on the actual resume. That phrase is only showing what remains before the number becomes final.
+
+After the validation checks pass, the result is genuinely excellent and CodeAudit-MCP can become the lead project on your AI Engineering resume.

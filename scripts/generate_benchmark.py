@@ -9,10 +9,10 @@ from datetime import datetime
 SYSTEM_PROMPT = "You are a Principal Engineer. Review code concisely, prioritizing logic. Strictly structure responses as: [Issue] -> [Impact] -> [Fix (Code Diff)]."
 
 # Define templates for different categories and hard negatives.
-# A "hard negative" is suspicious but safe code where the model should output: "Looks good" or equivalent (no issue found).
 TEMPLATES = [
     # --- SECURITY ---
     {
+        "template_id": "TPL-SEC-01",
         "lang": "Python", "category": "Security", "is_hard_negative": False, "has_issue": True,
         "issue": "SQL injection vulnerability via f-string.",
         "impact": "An attacker can manipulate the query to access or delete arbitrary data.",
@@ -20,11 +20,13 @@ TEMPLATES = [
         "fix_diff": "```python\ndef get_user(db, username):\n    return db.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n```"
     },
     {
+        "template_id": "TPL-SEC-02",
         "lang": "Python", "category": "Security", "is_hard_negative": True, "has_issue": False,
         "issue": "None", "impact": "None", "prompt_diff": "+ def get_user(db, username):\n+     # Suspicious looking query but uses parameterization correctly\n+     query = \"SELECT * FROM users WHERE username = ?\"\n+     return db.execute(query, (username,))",
         "fix_diff": "No issue found. The code is secure."
     },
     {
+        "template_id": "TPL-SEC-03",
         "lang": "TypeScript", "category": "Security", "is_hard_negative": False, "has_issue": True,
         "issue": "Cross-Site Scripting (XSS) via innerHTML.",
         "impact": "Attacker can execute arbitrary JavaScript in the victim's browser.",
@@ -32,6 +34,7 @@ TEMPLATES = [
         "fix_diff": "```typescript\nfunction renderMessage(msg: string) {\n    document.getElementById('chat').textContent = msg;\n}\n```"
     },
     {
+        "template_id": "TPL-SEC-04",
         "lang": "Java", "category": "Security", "is_hard_negative": False, "has_issue": True,
         "issue": "Command Injection via Runtime.exec().",
         "impact": "Attacker can execute arbitrary system commands on the host server.",
@@ -41,6 +44,7 @@ TEMPLATES = [
     
     # --- CORRECTNESS ---
     {
+        "template_id": "TPL-COR-01",
         "lang": "Python", "category": "Correctness", "is_hard_negative": False, "has_issue": True,
         "issue": "Mutable default argument in function.",
         "impact": "State is shared across all function calls, leading to unpredictable data contamination.",
@@ -48,12 +52,14 @@ TEMPLATES = [
         "fix_diff": "```python\ndef append_item(item, elements=None):\n    if elements is None:\n        elements = []\n    elements.append(item)\n    return elements\n```"
     },
     {
+        "template_id": "TPL-COR-02",
         "lang": "TypeScript", "category": "Correctness", "is_hard_negative": True, "has_issue": False,
         "issue": "None", "impact": "None",
         "prompt_diff": "+ async function processItems(items: number[]) {\n+     // Using map with Promise.all correctly\n+     await Promise.all(items.map(async (i) => await doWork(i)));\n+ }",
         "fix_diff": "No issue found. Asynchronous logic handles promises correctly."
     },
     {
+        "template_id": "TPL-COR-03",
         "lang": "Java", "category": "Correctness", "is_hard_negative": False, "has_issue": True,
         "issue": "Comparing Strings using '==' instead of '.equals()'.",
         "impact": "Evaluates reference equality instead of value equality, causing logic bugs.",
@@ -63,6 +69,7 @@ TEMPLATES = [
 
     # --- PERFORMANCE ---
     {
+        "template_id": "TPL-PER-01",
         "lang": "Java", "category": "Performance", "is_hard_negative": False, "has_issue": True,
         "issue": "String concatenation inside a loop.",
         "impact": "Creates excessive intermediate String objects, causing high memory usage and GC pressure.",
@@ -70,12 +77,14 @@ TEMPLATES = [
         "fix_diff": "```java\npublic String buildReport(List<String> items) {\n    StringBuilder report = new StringBuilder();\n    for (String item : items) {\n        report.append(item).append(\",\");\n    }\n    return report.toString();\n}\n```"
     },
     {
+        "template_id": "TPL-PER-02",
         "lang": "Python", "category": "Performance", "is_hard_negative": True, "has_issue": False,
         "issue": "None", "impact": "None",
         "prompt_diff": "+ def get_items(db):\n+     # Suspicious N+1, but prefetch_related is used correctly\n+     return list(Item.objects.prefetch_related('tags').all())",
         "fix_diff": "No issue found. ORM query is optimized."
     },
     {
+        "template_id": "TPL-PER-03",
         "lang": "TypeScript", "category": "Performance", "is_hard_negative": False, "has_issue": True,
         "issue": "Inefficient React component re-rendering due to inline object.",
         "impact": "Triggers cascaded re-renders of child components even when props haven't conceptually changed.",
@@ -85,6 +94,7 @@ TEMPLATES = [
 
     # --- MAINTAINABILITY ---
     {
+        "template_id": "TPL-MAI-01",
         "lang": "TypeScript", "category": "Maintainability", "is_hard_negative": False, "has_issue": True,
         "issue": "Magic numbers used in conditionals.",
         "impact": "Hard to understand the business logic. Changing the value requires hunting down all occurrences.",
@@ -92,6 +102,7 @@ TEMPLATES = [
         "fix_diff": "```typescript\nconst STATUS_ACTIVE = 2;\nconst MIN_AGE = 18;\nif (user.status === STATUS_ACTIVE && user.age > MIN_AGE) {\n    grantAccess(user);\n}\n```"
     },
     {
+        "template_id": "TPL-MAI-02",
         "lang": "Python", "category": "Maintainability", "is_hard_negative": False, "has_issue": True,
         "issue": "Broad Exception catching without logging.",
         "impact": "Silently swallows all errors, making debugging extremely difficult.",
@@ -99,6 +110,7 @@ TEMPLATES = [
         "fix_diff": "```python\nimport logging\ntry:\n    process_data()\nexcept Exception as e:\n    logging.error(\"Failed to process data\", exc_info=True)\n```"
     },
     {
+        "template_id": "TPL-MAI-03",
         "lang": "Java", "category": "Maintainability", "is_hard_negative": True, "has_issue": False,
         "issue": "None", "impact": "None",
         "prompt_diff": "+ // Suppressing warnings specifically for a legacy API integration\n+ @SuppressWarnings(\"unchecked\")\n+ public List<String> getLegacyData() {\n+     return (List<String>) legacyService.getData();\n+ }",
@@ -135,6 +147,7 @@ def generate_benchmark(output_path: str, count: int = 200, seed: int = 42):
                     {"role": "assistant", "content": formatted_review}
                 ],
                 "metadata": {
+                    "template_id": template["template_id"],
                     "lang": template["lang"],
                     "category": template["category"],
                     "is_hard_negative": template["is_hard_negative"],
@@ -168,7 +181,7 @@ if __name__ == "__main__":
     parser.add_argument("--force", action="store_true", help="Overwrite existing benchmark")
     args = parser.parse_args()
     
-    out_file = "codesentinel_benchmark.jsonl"
+    out_file = "codeaudit_benchmark.jsonl"
     
     if os.path.exists(out_file) and not args.force:
         print(f"❌ Error: {out_file} already exists.")

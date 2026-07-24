@@ -1,4 +1,4 @@
-# CodeSentinel MCP - Model Fine-tuning
+# CodeAudit MCP - Model Fine-tuning
 # Optimized for NVIDIA A100 (80GB) using Unsloth and LoRA
 
 import os
@@ -13,7 +13,7 @@ from sklearn.metrics import accuracy_score
 # Base model configurations
 MODEL_NAME = "meta-llama/Meta-Llama-3.1-8B-Instruct"  # OR Qwen/Qwen2.5-Coder-7B-Instruct
 MAX_SEQ_LENGTH = 4096 # Good for code review contexts
-DATASET_PATH = "codesentinel_MASTER_dataset.jsonl"
+DATASET_PATH = "codeaudit_MASTER_dataset.jsonl"
 
 def compute_metrics(eval_pred):
     """Compute accuracy metrics for evaluation."""
@@ -69,7 +69,7 @@ def train():
     print("\nDataset Sizes:")
     print(f"  Training examples: {len(train_dataset)}")
     print(f"  Validation examples: {len(eval_dataset)}")
-    print(f"  Held-out test examples: 200 (Frozen in codesentinel_benchmark.jsonl, explicitly excluded from training)")
+    print(f"  Held-out test examples: 200 (Frozen in codeaudit_benchmark.jsonl, explicitly excluded from training)")
     print("-" * 40 + "\n")
     
     # Define A100 optimized Training Arguments
@@ -91,7 +91,7 @@ def train():
         weight_decay = 0.01,
         lr_scheduler_type = "cosine",
         seed = 3407,
-        output_dir = "outputs_codesentinel_lora",
+        output_dir = "outputs_codeaudit_lora",
         load_best_model_at_end = True,
         metric_for_best_model = "accuracy",
     )
@@ -126,12 +126,12 @@ def train():
     print("="*60 + "\n")
     
     print("Training Complete. Saving LoRA Adapters...")
-    model.save_pretrained("codesentinel_lora_model")
-    tokenizer.save_pretrained("codesentinel_lora_model")
+    model.save_pretrained("codeaudit_lora_model")
+    tokenizer.save_pretrained("codeaudit_lora_model")
     
     # Save metrics to file
     with open("training_metrics.txt", "w") as f:
-        f.write("CodeSentinel Training Metrics\n")
+        f.write("CodeAudit Training Metrics\n")
         f.write("="*60 + "\n")
         f.write(f"Training Loss: {trainer_stats.training_loss:.4f}\n")
         f.write(f"Test Accuracy: {eval_results.get('eval_accuracy', 'N/A')}\n")

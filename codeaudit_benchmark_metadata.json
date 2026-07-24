@@ -1,0 +1,7 @@
+{
+  "benchmark_file": "codeaudit_benchmark.jsonl",
+  "generated_at": "2026-07-23T23:54:54.992112Z",
+  "seed": 42,
+  "sha256_hash": "364ae15b625065e79c617828e054a917eac35e36c8e141649c3c043003277ff3",
+  "total_examples": 200
+}
