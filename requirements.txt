@@ -6,3 +6,4 @@ accelerate
 bitsandbytes
 datasets
 transformers
+torchao==0.7.0
